@@ -8,7 +8,8 @@ defmodule Sentry.MixProject do
       elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
       elixirc_options: [warnings_as_errors: true],
-      deps: deps()
+      deps: deps(),
+      aliases: aliases()
     ]
   end
 
@@ -20,6 +21,13 @@ defmodule Sentry.MixProject do
     ]
   end
 
+  # Github prepush -> cli musi byc dla elixira 1.19
+  def cli do
+    [
+      preferred_envs: [prepush: :test]
+    ]
+  end
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
@@ -27,6 +35,13 @@ defmodule Sentry.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+    ]
+  end
+
+  # Githook: format + credo + test przed git push
+  defp aliases do
+    [
+      prepush: ["format --check-formatted", "credo", "test"]
     ]
   end
 end

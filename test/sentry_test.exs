@@ -1,5 +1,6 @@
 defmodule SentryTest do
   use ExUnit.Case
+
   doctest Sentry
 
   test "greets the world" do
