@@ -10,4 +10,18 @@ defmodule Sentry.Endpoint do
         }
 
   defstruct [:url, :protocol, :port, :frequency]
+
+  @doc """
+    Tworze endpoint z mapy
+  """
+
+  @spec new(map()) :: t()
+  def new(%{url: url, protocol: protocol, port: port, frequency: frequency}) do
+    %__MODULE__{
+      url: url,
+      protocol: protocol,
+      port: port,
+      frequency: frequency
+    }
+  end
 end
