@@ -68,6 +68,31 @@ defmodule Sentry.Monitor.MonitorTest do
 
       assert log =~ "DOWN: localhost"
     end
+
+    # testuje 404
+    test "logs DOWN when endpoint returns 404" do
+      bypass = Bypass.open()
+
+      Bypass.expect(bypass, fn conn ->
+        Plug.Conn.resp(conn, 404, "Not found")
+      end)
+
+      endpoint = %Endpoint{
+        url: "localhost",
+        protocol: :http,
+        port: bypass.port,
+        frequency: 10
+      }
+
+      {:ok, state} = Monitor.init(endpoint)
+
+      log =
+        capture_log(fn ->
+          {:noreply, _new_state} = Monitor.handle_info(:check, state)
+        end)
+
+      assert log =~ "DOWN: localhost"
+    end
   end
 
   describe "TCP monitor" do
