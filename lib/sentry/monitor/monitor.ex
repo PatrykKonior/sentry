@@ -22,7 +22,11 @@ defmodule Sentry.Monitor.Monitor do
 
   # wywołuje tylko gdy protocol = http
   defp check_status(%{protocol: :http} = endpoint) do
-    case Req.get(endpoint.url, timeout: 5000) do
+    # musi być takze obsługa https bo mam errory
+    scheme = if endpoint.port == 443, do: "https://", else: "http://"
+    full_url = "#{scheme}#{endpoint.url}"
+
+    case Req.get(full_url) do
       {:ok, %{status: status}} when status in 200..599 ->
         Logger.info("UP: #{endpoint.url}")
 
@@ -48,7 +52,7 @@ defmodule Sentry.Monitor.Monitor do
   # sprawdzamy frequency endpointu
   defp schedule_check(%{frequency: freq}) do
     # przy odpowiednim freq sekund otrzymuję wiadomość :check
-    Process.send_after(self(), :check, freq * 1000)
+    Process.send_after(self(), :check, freq)
   end
 
   # przez jaki kanał mamy znaleźć proces
@@ -59,7 +63,7 @@ defmodule Sentry.Monitor.Monitor do
 
   @impl true
   def init(endpoint) do
-    Logger.info("Starting monitor for #{endpoint.url} (#{endpoint.frequency}s)")
+    Logger.info("Starting monitor for #{endpoint.url} (#{div(endpoint.frequency, 1000)}s)")
     schedule_check(endpoint)
     {:ok, endpoint}
   end
