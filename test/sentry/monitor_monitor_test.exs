@@ -96,8 +96,41 @@ defmodule Sentry.Monitor.MonitorTest do
   end
 
   describe "TCP monitor" do
-    test "placeholder" do
-      assert true
+    test "logs UP when tcp server accepts connection" do
+      # Fake TCP serwer na losowym porcie
+      # :gen_tcp.listen/2 otwiera socket nasłuchujący (serwer) na danym porcie
+      # 0 oznacza, ze biore wolny port z puli systemowej - system sam mi go wybierze
+      # reuseaddr: true – pozwala szybko ponownie użyć portu, gdyby test był odpalany wiele razy
+      {:ok, listen_socket} =
+        :gen_tcp.listen(0, [:binary, packet: :raw, active: false, reuseaddr: true])
+
+      # :inet.port/1 sprawdza na jakim porcie faktycznie nasłuchuje socket
+      {:ok, port} = :inet.port(listen_socket)
+
+      # Prosty serwer: akceptuje jedno połączenie i zamyka
+      Task.start_link(fn ->
+        {:ok, socket} = :gen_tcp.accept(listen_socket)
+        # koncze sesje z monitorem
+        :gen_tcp.close(socket)
+        # zamykam nasluchiwanie na porcie
+        :gen_tcp.close(listen_socket)
+      end)
+
+      endpoint = %Endpoint{
+        url: "localhost",
+        protocol: :tcp,
+        port: port,
+        frequency: 10
+      }
+
+      {:ok, state} = Monitor.init(endpoint)
+
+      log =
+        capture_log(fn ->
+          {:noreply, _} = Monitor.handle_info(:check, state)
+        end)
+
+      assert log =~ "UP: localhost:#{port}"
     end
   end
 end
