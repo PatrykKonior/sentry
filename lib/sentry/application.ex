@@ -19,6 +19,7 @@ defmodule Sentry.Application do
       name: Sentry.Application
     )
 
+    # Wczytuję listę endpointów z config/config.exs (:sentry, :endpoints)
     endpoints =
       :sentry
       |> Application.get_env(:endpoints, [])
