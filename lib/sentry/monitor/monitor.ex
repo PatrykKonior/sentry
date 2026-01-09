@@ -23,8 +23,14 @@ defmodule Sentry.Monitor.Monitor do
   # wywołuje tylko gdy protocol = http
   defp check_status(%{protocol: :http} = endpoint) do
     # musi być takze obsługa https bo mam errory
+    # dodana takze obsługa https po porcie oraz portu w URL jezeli zostanie podany - wyszło przy testowaniu
     scheme = if endpoint.port == 443, do: "https://", else: "http://"
-    full_url = "#{scheme}#{endpoint.url}"
+
+    full_url =
+      case endpoint.port do
+        nil -> "#{scheme}#{endpoint.url}"
+        port -> "#{scheme}#{endpoint.url}:#{port}"
+      end
 
     case Req.get(full_url) do
       {:ok, %{status: status}} when status in 200..599 ->
