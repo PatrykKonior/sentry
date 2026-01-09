@@ -19,20 +19,13 @@ defmodule Sentry.Application do
       name: Sentry.Application
     )
 
-    # na sztywno wpisane endpointy
+    endpoints =
+      :sentry
+      |> Application.get_env(:endpoints, [])
+      |> Enum.map(&Sentry.Endpoint.new/1)
 
-    # endpoints = [
-    #  %{url: "google.com", protocol: :http, port: 443, frequency: 5_000},
-    #  %{url: "example.com", protocol: :http, port: 80, frequency: 10_000},
-    #  %{url: "smtp.gmail.com", protocol: :tcp, port: 587, frequency: 15_000}
-    # ]
+    Enum.each(endpoints, &Sentry.Supervisor.Supervisor.start_monitor/1)
 
-    # endpoints
-    # |> Enum.map(&Sentry.Endpoint.new/1)
-    # |> Enum.each(&Sentry.Supervisor.Supervisor.start_monitor/1)
-
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     # opts = [strategy: :one_for_one, name: Sentry.Application]
     # Supervisor.start_link(children, opts)
     {:ok, self()}
