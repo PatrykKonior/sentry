@@ -132,5 +132,26 @@ defmodule Sentry.Monitor.MonitorTest do
 
       assert log =~ "UP: localhost:#{port}"
     end
+
+    test "logs DOWN when tcp server is not available" do
+      # Port, na którym prawdopodobnie nikt nie słucha
+      port = 65_000
+
+      endpoint = %Endpoint{
+        url: "localhost",
+        protocol: :tcp,
+        port: port,
+        frequency: 10
+      }
+
+      {:ok, state} = Monitor.init(endpoint)
+
+      log =
+        capture_log(fn ->
+          {:noreply, _} = Monitor.handle_info(:check, state)
+        end)
+
+      assert log =~ "DOWN: localhost:#{port}"
+    end
   end
 end
