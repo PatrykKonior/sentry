@@ -21,7 +21,7 @@ defmodule Sentry.Supervisor.Supervisor do
   @spec start_monitor(Sentry.Endpoint.t()) :: {:ok, pid()} | {:error, term()}
   def start_monitor(endpoint) do
     # uruchamiam sentry.monitor z danym endpointem
-    spec = {Sentry.Monitor, endpoint}
+    spec = {Sentry.Monitor.Monitor, endpoint}
     DynamicSupervisor.start_child(__MODULE__, spec)
   end
 
