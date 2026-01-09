@@ -43,6 +43,31 @@ defmodule Sentry.Monitor.MonitorTest do
       #
       assert log =~ "UP: localhost"
     end
+
+    # to samo co wyzej ale dla DOWN
+    test "logs DOWN when endpoint returns 500" do
+      bypass = Bypass.open()
+
+      Bypass.expect(bypass, fn conn ->
+        Plug.Conn.resp(conn, 500, "ERR")
+      end)
+
+      endpoint = %Endpoint{
+        url: "localhost",
+        protocol: :http,
+        port: bypass.port,
+        frequency: 10
+      }
+
+      {:ok, state} = Monitor.init(endpoint)
+
+      log =
+        capture_log(fn ->
+          {:noreply, _new_state} = Monitor.handle_info(:check, state)
+        end)
+
+      assert log =~ "DOWN: localhost"
+    end
   end
 
   describe "TCP monitor" do

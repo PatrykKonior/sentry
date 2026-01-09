@@ -24,6 +24,7 @@ defmodule Sentry.Monitor.Monitor do
   defp check_status(%{protocol: :http} = endpoint) do
     # musi być takze obsługa https bo mam errory
     # dodana takze obsługa https po porcie oraz portu w URL jezeli zostanie podany - wyszło przy testowaniu
+    # poprawne statusy dla up i down - wyszlo po testowaniu
     scheme = if endpoint.port == 443, do: "https://", else: "http://"
 
     full_url =
@@ -33,8 +34,11 @@ defmodule Sentry.Monitor.Monitor do
       end
 
     case Req.get(full_url) do
-      {:ok, %{status: status}} when status in 200..599 ->
+      {:ok, %{status: status}} when status in 200..299 ->
         Logger.info("UP: #{endpoint.url}")
+
+      {:ok, %{status: status}} when status in 300..599 ->
+        Logger.warning("DOWN: #{endpoint.url}")
 
       _ ->
         Logger.warning("DOWN: #{endpoint.url}")
