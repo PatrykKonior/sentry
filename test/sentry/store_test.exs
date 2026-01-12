@@ -41,4 +41,20 @@ defmodule Sentry.StoreTest do
     assert {"one.example", pid1} in entries
     assert {"two.example", pid2} in entries
   end
+
+  test "delete removes url-pid entry from ETS" do
+    Store.init_table()
+
+    url = "delete.me"
+    pid = self()
+
+    # dodaje
+    assert true == Store.put(url, pid)
+    # sprawdzam czy jest
+    assert {:ok, ^pid} = Store.get(url)
+    # usuwam go
+    assert true == Store.delete(url)
+    # potwierdzam, ze teraz jak dam znow get to dostane errora
+    assert :error == Store.get(url)
+  end
 end

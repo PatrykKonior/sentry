@@ -38,6 +38,12 @@ defmodule Sentry.Store do
     :ets.tab2list(@table)
   end
 
+  # usunięcie wpisu po url -> pid
+  @spec delete(String.t()) :: true
+  def delete(url) do
+    :ets.delete(@table, url)
+  end
+
   # odczyt po url
   @spec get(String.t()) :: {:ok, pid()} | :error
   def get(url) do
