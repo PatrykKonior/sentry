@@ -7,6 +7,9 @@ defmodule Sentry.Application do
 
   @impl true
   def start(_type, _args) do
+    # Inicjalizuje tabelę ETS na endpointy (url -> pid monitora)
+    :ok = Sentry.Store.init_table()
+
     children = [
       {Registry, keys: :unique, name: Sentry.Registry},
       Sentry.Supervisor.Supervisor
