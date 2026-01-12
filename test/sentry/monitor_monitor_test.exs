@@ -169,4 +169,31 @@ defmodule Sentry.Monitor.MonitorTest do
       assert :running == Monitor.status(pid)
     end
   end
+
+  describe "pause/1 and resume/1" do
+    test "changes status to :paused and back to :running" do
+      endpoint = %Endpoint{
+        url: "localhost-pause-test",
+        protocol: :http,
+        port: 65_101,
+        frequency: 10
+      }
+
+      {:ok, pid} = Monitor.start_link(endpoint)
+
+      # na początku zawsze jest :running
+      assert :running == Monitor.status(pid)
+
+      # po pause -> :paused
+      :ok = Monitor.pause(pid)
+      # cast jest async, więc musze mu dać maly sleep
+      Process.sleep(10)
+      assert :paused == Monitor.status(pid)
+
+      # po resume -> znow :running
+      :ok = Monitor.resume(pid)
+      Process.sleep(10)
+      assert :running == Monitor.status(pid)
+    end
+  end
 end

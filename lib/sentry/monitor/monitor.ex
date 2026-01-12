@@ -26,6 +26,22 @@ defmodule Sentry.Monitor.Monitor do
     GenServer.call(server, :status)
   end
 
+  @doc """
+    Zatrzymuje sprawdzanie endpointu (ustawia status na :paused).
+  """
+  @spec pause(pid() | GenServer.name()) :: :ok
+  def pause(server) do
+    GenServer.cast(server, :pause)
+  end
+
+  @doc """
+    Wznawia sprawdzanie endpointu (ustawia status na :running).
+  """
+  @spec resume(pid() | GenServer.name()) :: :ok
+  def resume(server) do
+    GenServer.cast(server, :resume)
+  end
+
   # Private functions
 
   # wywołuje tylko gdy protocol = http
@@ -95,9 +111,27 @@ defmodule Sentry.Monitor.Monitor do
     {:reply, status, state}
   end
 
+  # zmiana statusu na pauze
   @impl true
-  def handle_info(:check, %{endpoint: endpoint} = state) do
-    check_status(endpoint)
+  def handle_cast(:pause, %{status: _old} = state) do
+    new_state = %{state | status: :paused}
+    {:noreply, new_state}
+  end
+
+  # zmiana statusu znow na running
+  @impl true
+  def handle_cast(:resume, %{status: _old} = state) do
+    new_state = %{state | status: :running}
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_info(:check, %{endpoint: endpoint, status: status} = state) do
+    # tutaj check -> jezeli monitor jest uruchomiony to robie check
+    if status == :running do
+      check_status(endpoint)
+    end
+
     schedule_check(endpoint)
     {:noreply, state}
   end
