@@ -23,4 +23,31 @@ defmodule Sentry.Service do
     endpoint = Endpoint.new(endpoint_params)
     SentrySupervisor.start_monitor(endpoint)
   end
+
+  @doc """
+  Usuwam endpoint z monitorowania w runtime.
+
+  Szukam pid po URL w ETS i jeśli znajde:
+    * zatrzymuje dziecko w DynamicSupervisor,
+    * usuwam wpis z ETS.
+
+  Zwracam:
+    * :ok - gdy monitor został poprawnie usunięty,
+    * {:error, :not_found} - gdy nie ma takiego endpointu w ETS,
+    * {:error, reason} - gdy terminate_child zwrócił błąd.
+  """
+  @spec remove(String.t()) :: :ok | {:error, :not_found | term()}
+  def remove(url) do
+    # szukam PID mając URL w ETS
+    with {:ok, pid} <- Sentry.Store.get(url),
+         # teraz usuwam proces monitora z globalnego supervisora
+         :ok <- DynamicSupervisor.terminate_child(SentrySupervisor, pid) do
+      # tutaj czyszczę wpis w ETS
+      Sentry.Store.delete(url)
+      :ok
+    else
+      :error -> {:error, :not_found}
+      {:error, reason} -> {:error, reason}
+    end
+  end
 end
