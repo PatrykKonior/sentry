@@ -18,6 +18,14 @@ defmodule Sentry.Monitor.Monitor do
     GenServer.start_link(__MODULE__, endpoint, name: via_tuple(endpoint))
   end
 
+  @doc """
+    Zwracam aktualny status monitora (:running lub :paused).
+  """
+  @spec status(pid() | GenServer.name()) :: :running | :paused
+  def status(server) do
+    GenServer.call(server, :status)
+  end
+
   # Private functions
 
   # wywołuje tylko gdy protocol = http
@@ -75,13 +83,22 @@ defmodule Sentry.Monitor.Monitor do
   def init(endpoint) do
     Logger.info("Starting monitor for #{endpoint.url} (#{div(endpoint.frequency, 1000)}s)")
     schedule_check(endpoint)
-    {:ok, endpoint}
+
+    # state, który przetrzymuje mi endpoint + jego aktualny stan
+    state = %{endpoint: endpoint, status: :running}
+
+    {:ok, state}
   end
 
   @impl true
-  def handle_info(:check, endpoint) do
+  def handle_call(:status, _from, %{status: status} = state) do
+    {:reply, status, state}
+  end
+
+  @impl true
+  def handle_info(:check, %{endpoint: endpoint} = state) do
     check_status(endpoint)
     schedule_check(endpoint)
-    {:noreply, endpoint}
+    {:noreply, state}
   end
 end

@@ -154,4 +154,19 @@ defmodule Sentry.Monitor.MonitorTest do
       assert log =~ "DOWN: localhost:#{port}"
     end
   end
+
+  describe "status/1" do
+    test "returns :running after init" do
+      endpoint = %Endpoint{
+        url: "localhost-status-test",
+        protocol: :http,
+        port: 65_100,
+        frequency: 10
+      }
+
+      {:ok, pid} = Monitor.start_link(endpoint)
+
+      assert :running == Monitor.status(pid)
+    end
+  end
 end
