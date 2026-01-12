@@ -19,10 +19,18 @@ defmodule Sentry.Supervisor.Supervisor do
     Start monitora dla zadanego endpointa
   """
   @spec start_monitor(Sentry.Endpoint.t()) :: {:ok, pid()} | {:error, term()}
-  def start_monitor(endpoint) do
+  def start_monitor(%Sentry.Endpoint{url: url} = endpoint) do
     # uruchamiam sentry.monitor z danym endpointem
     spec = {Sentry.Monitor.Monitor, endpoint}
-    DynamicSupervisor.start_child(__MODULE__, spec)
+
+    case DynamicSupervisor.start_child(__MODULE__, spec) do
+      {:ok, pid} = ok ->
+        Sentry.Store.put(url, pid)
+        ok
+
+      other ->
+        other
+    end
   end
 
   @impl true
