@@ -4,6 +4,7 @@ defmodule Sentry.Service do
   """
 
   alias Sentry.Endpoint
+  alias Sentry.Monitor.Monitor
   alias Sentry.Supervisor.Supervisor, as: SentrySupervisor
 
   @doc """
@@ -22,6 +23,25 @@ defmodule Sentry.Service do
   def add(endpoint_params) do
     endpoint = Endpoint.new(endpoint_params)
     SentrySupervisor.start_monitor(endpoint)
+  end
+
+  @doc """
+  Zatrzymuje monitorowanie endpointu o podanym URL (pauza w runtime).
+
+  Zwracam:
+    * :ok - gdy monitor istnieje i został spauzowany,
+    * {:error, :not_found} - gdy brak monitora dla danego URL.
+  """
+  @spec pause(String.t()) :: :ok | {:error, :not_found}
+  def pause(url) do
+    case Sentry.Store.get(url) do
+      {:ok, pid} ->
+        :ok = Monitor.pause(pid)
+        :ok
+
+      :error ->
+        {:error, :not_found}
+    end
   end
 
   @doc """
@@ -48,6 +68,25 @@ defmodule Sentry.Service do
     else
       :error -> {:error, :not_found}
       {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  Wznawia monitorowanie endpointu o podanym URL (resume w runtime).
+
+  Zwraca:
+    * :ok - gdy monitor istnieje i został wznowiony,
+    * {:error, :not_found} - gdy brak monitora dla danego URL.
+  """
+  @spec resume(String.t()) :: :ok | {:error, :not_found}
+  def resume(url) do
+    case Sentry.Store.get(url) do
+      {:ok, pid} ->
+        :ok = Monitor.resume(pid)
+        :ok
+
+      :error ->
+        {:error, :not_found}
     end
   end
 end

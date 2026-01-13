@@ -5,6 +5,7 @@ defmodule Sentry.ServiceTest do
 
   use ExUnit.Case, async: true
 
+  alias Sentry.Monitor.Monitor
   alias Sentry.Service
   alias Sentry.Store
 
@@ -58,6 +59,41 @@ defmodule Sentry.ServiceTest do
       :ok = Store.init_table()
 
       assert {:error, :not_found} = Service.remove("non-existent-service")
+    end
+  end
+
+  describe "pause/1 and resume/1" do
+    test "pauses and resumes existing monitor by url" do
+      :ok = Store.init_table()
+
+      endpoint_params = %{
+        url: "localhost-pause-service-test",
+        protocol: :http,
+        port: 65_200,
+        frequency: 10
+      }
+
+      # startuje monitor przez Service
+      assert {:ok, pid} = Service.add(endpoint_params)
+      assert :running == Monitor.status(pid)
+
+      # pauza po URL
+      assert :ok = Service.pause("localhost-pause-service-test")
+      # małe okno na cast
+      Process.sleep(10)
+      assert :paused == Monitor.status(pid)
+
+      # robie resume aby wrocil do zywych
+      assert :ok = Service.resume("localhost-pause-service-test")
+      Process.sleep(10)
+      assert :running == Monitor.status(pid)
+    end
+
+    test "returns :not_found for pause/resume when url is missing" do
+      :ok = Store.init_table()
+
+      assert {:error, :not_found} = Service.pause("non-existent-service")
+      assert {:error, :not_found} = Service.resume("non-existent-service")
     end
   end
 end
