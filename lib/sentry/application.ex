@@ -11,10 +11,12 @@ defmodule Sentry.Application do
     :ok = Sentry.Store.init_table()
 
     children = [
+      # startuję lokalny cache Nebulex
+      {Sentry.Cache, []},
+      # Registry do rejestrowania monitorów po URL
       {Registry, keys: :unique, name: Sentry.Registry},
+      # DynamicSupervisor zarządzający monitorami
       Sentry.Supervisor.Supervisor
-      # Starts a worker by calling: Sentry.Worker.start_link(arg)
-      # {Sentry.Worker, arg}
     ]
 
     Supervisor.start_link(children,
